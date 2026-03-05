@@ -6,6 +6,9 @@ using Xunit;
 
 namespace XrkApi.Tests;
 
+[CollectionDefinition("XrkCacheDir")]
+public class XrkCacheDirCollection { }
+
 public class BuildCsvTests
 {
     [Fact]
@@ -203,6 +206,7 @@ public class WithXrkFileAsyncTests
     }
 }
 
+[Collection("XrkCacheDir")]
 public class CacheExistsTests
 {
     private const string ValidKey64 = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
@@ -272,6 +276,115 @@ public class CacheExistsTests
     }
 }
 
+[Collection("XrkCacheDir")]
+public class RemoveCacheEntryTests
+{
+    private const string ValidKey64 = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+    [Fact]
+    public void RemoveCacheEntry_InvalidKey_ReturnsFalse()
+    {
+        Assert.False(XrkService.RemoveCacheEntry(null!));
+        Assert.False(XrkService.RemoveCacheEntry(""));
+        Assert.False(XrkService.RemoveCacheEntry("abc"));
+        Assert.False(XrkService.RemoveCacheEntry(ValidKey64 + "0"));
+    }
+
+    [Fact]
+    public void RemoveCacheEntry_NotInCache_ReturnsFalse()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "XrkApi.Tests", Guid.NewGuid().ToString("N"));
+        var prevDir = Environment.GetEnvironmentVariable("XRK_CACHE_DIR");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", tempDir, EnvironmentVariableTarget.Process);
+            Assert.False(XrkService.RemoveCacheEntry(ValidKey64));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", prevDir ?? "", EnvironmentVariableTarget.Process);
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void RemoveCacheEntry_InCache_RemovesAndReturnsTrue()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "XrkApi.Tests", Guid.NewGuid().ToString("N"));
+        var prevDir = Environment.GetEnvironmentVariable("XRK_CACHE_DIR");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", tempDir, EnvironmentVariableTarget.Process);
+            var metaPath = Path.Combine(tempDir, $"{ValidKey64}.metadata.json");
+            var csvPath = Path.Combine(tempDir, $"{ValidKey64}.csv");
+            File.WriteAllText(metaPath, "{}");
+            File.WriteAllText(csvPath, "x");
+            Assert.True(XrkService.CacheExists(ValidKey64));
+
+            Assert.True(XrkService.RemoveCacheEntry(ValidKey64));
+            Assert.False(XrkService.CacheExists(ValidKey64));
+            Assert.False(File.Exists(metaPath));
+            Assert.False(File.Exists(csvPath));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", prevDir ?? "", EnvironmentVariableTarget.Process);
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true); } catch { }
+        }
+    }
+}
+
+[Collection("XrkCacheDir")]
+public class ClearCacheTests
+{
+    private const string ValidKey64 = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+    [Fact]
+    public void ClearCache_EmptyDir_ReturnsZero()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "XrkApi.Tests", Guid.NewGuid().ToString("N"));
+        var prevDir = Environment.GetEnvironmentVariable("XRK_CACHE_DIR");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", tempDir, EnvironmentVariableTarget.Process);
+            Assert.Equal(0, XrkService.ClearCache());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", prevDir ?? "", EnvironmentVariableTarget.Process);
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void ClearCache_RemovesAllEntries()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "XrkApi.Tests", Guid.NewGuid().ToString("N"));
+        var prevDir = Environment.GetEnvironmentVariable("XRK_CACHE_DIR");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", tempDir, EnvironmentVariableTarget.Process);
+            File.WriteAllText(Path.Combine(tempDir, $"{ValidKey64}.metadata.json"), "{}");
+            File.WriteAllText(Path.Combine(tempDir, $"{ValidKey64}.csv"), "x");
+            var key2 = "FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210";
+            File.WriteAllText(Path.Combine(tempDir, $"{key2}.metadata.json"), "{}");
+            File.WriteAllText(Path.Combine(tempDir, $"{key2}.csv"), "y");
+
+            Assert.Equal(2, XrkService.ClearCache());
+            Assert.Equal(0, XrkService.GetCacheEntryCount());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("XRK_CACHE_DIR", prevDir ?? "", EnvironmentVariableTarget.Process);
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true); } catch { }
+        }
+    }
+}
+
 public class GetCacheDirectoryTests
 {
     [Fact]
@@ -323,5 +436,62 @@ public class GetHealthResultTests
         var env = new StubHostEnvironment();
         var result = XrkService.GetHealthResult(env);
         Assert.NotNull(result);
+    }
+}
+
+public class SharedTokenAuthTests
+{
+    [Fact]
+    public void IsValidSharedToken_NoTokenConfigured_NoHeader_ReturnsTrue()
+    {
+        Assert.True(XrkService.IsValidSharedToken(null, null));
+        Assert.True(XrkService.IsValidSharedToken("", null));
+        Assert.True(XrkService.IsValidSharedToken("   ", null));
+    }
+
+    [Fact]
+    public void IsValidSharedToken_NoTokenConfigured_WithHeader_ReturnsTrue()
+    {
+        Assert.True(XrkService.IsValidSharedToken(null, "Bearer anything"));
+        Assert.True(XrkService.IsValidSharedToken("", "Bearer secret"));
+    }
+
+    [Fact]
+    public void IsValidSharedToken_TokenConfigured_NoHeader_ReturnsFalse()
+    {
+        Assert.False(XrkService.IsValidSharedToken("my-secret", null));
+        Assert.False(XrkService.IsValidSharedToken("my-secret", ""));
+    }
+
+    [Fact]
+    public void IsValidSharedToken_TokenConfigured_NotBearer_ReturnsFalse()
+    {
+        Assert.False(XrkService.IsValidSharedToken("my-secret", "Basic abc"));
+        Assert.False(XrkService.IsValidSharedToken("my-secret", "my-secret"));
+        Assert.False(XrkService.IsValidSharedToken("my-secret", "Bearer"));
+    }
+
+    [Fact]
+    public void IsValidSharedToken_TokenConfigured_WrongValue_ReturnsFalse()
+    {
+        Assert.False(XrkService.IsValidSharedToken("my-secret", "Bearer wrong"));
+        Assert.False(XrkService.IsValidSharedToken("my-secret", "Bearer "));
+        Assert.False(XrkService.IsValidSharedToken("my-secret", "Bearer  "));
+    }
+
+    [Fact]
+    public void IsValidSharedToken_TokenConfigured_CorrectValue_ReturnsTrue()
+    {
+        Assert.True(XrkService.IsValidSharedToken("my-secret", "Bearer my-secret"));
+        Assert.True(XrkService.IsValidSharedToken("  my-secret  ", "Bearer my-secret"));
+        Assert.True(XrkService.IsValidSharedToken("my-secret", "Bearer  my-secret  "));
+    }
+
+    [Fact]
+    public void IsValidSharedToken_BearerPrefix_IsCaseInsensitive()
+    {
+        Assert.True(XrkService.IsValidSharedToken("s", "bearer s"));
+        Assert.True(XrkService.IsValidSharedToken("s", "BEARER s"));
+        Assert.True(XrkService.IsValidSharedToken("s", "Bearer s"));
     }
 }

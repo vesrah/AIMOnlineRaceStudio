@@ -8,6 +8,10 @@ if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
 builder.Services.AddOpenApi();
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 100 * 1024 * 1024);
 
+var sharedToken = builder.Configuration["XrkApi:SharedToken"]
+    ?? Environment.GetEnvironmentVariable("XRK_API_SHARED_TOKEN")
+    ?? "";
+
 var app = builder.Build();
 
 app.Use(async (context, next) =>
@@ -40,6 +44,25 @@ app.Use(async (context, next) =>
     await context.Response.WriteAsync(XrkService.PrivateAccessOnlyMessage);
 });
 
+if (!string.IsNullOrWhiteSpace(sharedToken))
+{
+    app.Use(async (context, next) =>
+    {
+        var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+        if (!XrkService.IsValidSharedToken(sharedToken, authHeader))
+        {
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            var message = string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? "Missing or invalid Authorization header."
+                : "Invalid token.";
+            await context.Response.WriteAsJsonAsync(new { error = "Unauthorized", message });
+            return;
+        }
+        await next(context);
+    });
+}
+
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapPost("/csv", (IFormFile file, bool nocache = false) => XrkService.WithXrkFileAsync(file, returnCsv: true, useCache: !nocache))
@@ -60,5 +83,21 @@ app.MapGet("/cache/{key}", (string key) =>
 })
     .WithName("CacheExists")
     .Produces<object>(200);
+
+app.MapDelete("/cache/{key}", (string key) =>
+{
+    var removed = XrkService.RemoveCacheEntry(key);
+    return removed ? Results.Ok(new { key, removed = true }) : Results.NotFound(new { key, removed = false });
+})
+    .WithName("DeleteCacheEntry")
+    .Produces<object>(200)
+    .Produces<object>(404);
+
+app.MapDelete("/cache", () =>
+{
+    var cleared = XrkService.ClearCache();
+    return Results.Ok(new { cleared });
+})
+    .WithName("ClearCache");
 
 app.Run();

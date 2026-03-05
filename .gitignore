@@ -1,57 +1,22 @@
-## OS-specific
+## OS
 .DS_Store
 Thumbs.db
 
-## Build outputs
-bin/
-obj/
-out/
-dist/
-
-## .NET / Visual Studio
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-*.vsp
-*.vspscc
-*.vssscc
-*.psess
-*.pidb
-*.svclog
-*.pdb
-.vs/
-
-## Rider / IntelliJ
+## IDEs and editors (repo-wide)
 .idea/
 *.iml
+.vs/
+*.DotSettings.user
+.ReSharper*/
+*.DotCover
 
-## Logs
+## Logs and test output
 logs/
 *.log
-
-## NuGet
-*.nupkg
-*.snupkg
-packages/
-project.lock.json
-artifacts/
-
-## Resharper / DotCover
-_ReSharper*/
-*.DotSettings.user
-*.dotCover
-
-## Other tooling
-.sonarqube/
-.scannerwork/
 coverage*/
 TestResults/
+.sonarqube/
+.scannerwork/
 
-## Local configuration / secrets (adjust as needed)
-appsettings.Development.json
-appsettings.Local.json
-*.secret.json
-
-## Specific to this project
+## Repo-specific
 /TestData/

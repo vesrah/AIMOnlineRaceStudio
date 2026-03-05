@@ -13,6 +13,16 @@ public static class XrkService
     private const string OpenFileError = "The DLL could not open or parse the XRK file. Ensure it is a valid 64-bit DLL and 64-bit runtime.";
     public const string PrivateAccessOnlyMessage = "Forbidden: only local and private network access is allowed.";
 
+    public static bool IsValidSharedToken(string? configuredToken, string? authorizationHeader)
+    {
+        if (string.IsNullOrWhiteSpace(configuredToken)) return true;
+        var token = configuredToken.Trim();
+        if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            return false;
+        var supplied = authorizationHeader["Bearer ".Length..].Trim();
+        return supplied == token && !string.IsNullOrEmpty(supplied);
+    }
+
     private static readonly object CacheLock = new();
 
     private static bool IsValidCacheKey(string key) =>
@@ -87,6 +97,42 @@ public static class XrkService
         {
             var metaPath = Path.Combine(GetCacheDir(), $"{key}.metadata.json");
             return File.Exists(metaPath);
+        }
+    }
+
+    public static bool RemoveCacheEntry(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key) || !IsValidCacheKey(key)) return false;
+        lock (CacheLock)
+        {
+            var dir = GetCacheDir();
+            var metaPath = Path.Combine(dir, $"{key}.metadata.json");
+            var csvPath = Path.Combine(dir, $"{key}.csv");
+            var removed = false;
+            if (File.Exists(metaPath)) { try { File.Delete(metaPath); removed = true; } catch { } }
+            if (File.Exists(csvPath)) { try { File.Delete(csvPath); removed = true; } catch { } }
+            return removed;
+        }
+    }
+
+    public static int ClearCache()
+    {
+        lock (CacheLock)
+        {
+            var dir = GetCacheDir();
+            if (!Directory.Exists(dir)) return 0;
+            var count = 0;
+            foreach (var metaPath in Directory.GetFiles(dir, "*.metadata.json"))
+            {
+                var key = Path.GetFileName(metaPath).Replace(".metadata.json", "");
+                if (key.Length == 64 && IsValidCacheKey(key))
+                {
+                    var csvPath = Path.Combine(dir, $"{key}.csv");
+                    try { if (File.Exists(metaPath)) { File.Delete(metaPath); count++; } } catch { }
+                    try { if (File.Exists(csvPath)) File.Delete(csvPath); } catch { }
+                }
+            }
+            return count;
         }
     }
 

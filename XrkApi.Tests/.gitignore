@@ -1,0 +1,13 @@
+## .NET build
+bin/
+obj/
+*.pdb
+packages/
+project.lock.json
+*.nupkg
+*.snupkg
+
+## Visual Studio
+*.user
+*.suo
+*.DotSettings.user

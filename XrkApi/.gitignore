@@ -1,0 +1,26 @@
+## .NET build and publish
+bin/
+obj/
+*.pdb
+packages/
+project.lock.json
+artifacts/
+*.nupkg
+*.snupkg
+
+## Visual Studio
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vsp
+*.vspscc
+*.vssscc
+*.psess
+*.pidb
+*.svclog
+
+## Local config and secrets
+appsettings.Development.json
+appsettings.Local.json
+*.secret.json
