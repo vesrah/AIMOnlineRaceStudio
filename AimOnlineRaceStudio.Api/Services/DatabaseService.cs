@@ -27,18 +27,31 @@ public class DatabaseService : IDatabaseService
             return;
         }
 
-        var schemaPath = Path.Combine(AppContext.BaseDirectory, "Schema", "01_schema.sql");
-        if (!File.Exists(schemaPath))
+        var schemaDir = Path.Combine(AppContext.BaseDirectory, "Schema");
+        if (!Directory.Exists(schemaDir))
         {
-            _logger.LogWarning("Schema file not found at {Path}", schemaPath);
+            _logger.LogWarning("Schema directory not found at {Path}", schemaDir);
             return;
         }
 
-        var sql = await File.ReadAllTextAsync(schemaPath, ct);
+        var schemaFiles = Directory.GetFiles(schemaDir, "*.sql")
+            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+            .ToArray();
+        if (schemaFiles.Length == 0)
+        {
+            _logger.LogWarning("No schema files found in {Path}", schemaDir);
+            return;
+        }
+
         await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync(ct);
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        await cmd.ExecuteNonQueryAsync(ct);
+        foreach (var schemaPath in schemaFiles)
+        {
+            var sql = await File.ReadAllTextAsync(schemaPath, ct);
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            await cmd.ExecuteNonQueryAsync(ct);
+            _logger.LogInformation("Applied schema {File}", Path.GetFileName(schemaPath));
+        }
         _logger.LogInformation("Schema applied successfully");
     }
 }

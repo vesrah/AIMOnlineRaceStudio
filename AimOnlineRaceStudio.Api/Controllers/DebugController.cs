@@ -1,6 +1,7 @@
 using AimOnlineRaceStudio.Api.Configuration;
 using AimOnlineRaceStudio.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace AimOnlineRaceStudio.Api.Controllers;
@@ -11,11 +12,20 @@ public class DebugController : ControllerBase
 {
     private readonly IXrkApiClient _xrkApiClient;
     private readonly IOptions<XrkApiOptions> _xrkApiOptions;
+    private readonly IFilesRepository _filesRepository;
+    private readonly IFilesService _filesService;
 
-    public DebugController(IXrkApiClient xrkApiClient, IOptions<XrkApiOptions> xrkApiOptions)
+    [ActivatorUtilitiesConstructor]
+    public DebugController(
+        IXrkApiClient xrkApiClient,
+        IOptions<XrkApiOptions> xrkApiOptions,
+        IFilesRepository filesRepository,
+        IFilesService filesService)
     {
         _xrkApiClient = xrkApiClient;
         _xrkApiOptions = xrkApiOptions;
+        _filesRepository = filesRepository;
+        _filesService = filesService;
     }
 
     [HttpGet("xrkapi-health")]
@@ -28,6 +38,13 @@ public class DebugController : ControllerBase
             configuredUrl = baseUrl,
             result,
         });
+    }
+
+    [HttpGet("storage")]
+    public async Task<IActionResult> GetStorageStats(CancellationToken ct)
+    {
+        var (totalBytes, fileCount) = await _filesRepository.GetStorageStatsAsync(ct);
+        return Ok(new { totalBytes, fileCount });
     }
 
     [HttpDelete("cache")]
@@ -46,5 +63,12 @@ public class DebugController : ControllerBase
         if (!ok)
             return StatusCode(502, new { error = "XrkApi request failed", removed = false });
         return removed ? Ok(new { key, removed = true }) : NotFound(new { key, removed = false });
+    }
+
+    [HttpPost("clear-all")]
+    public async Task<IActionResult> ClearAll(CancellationToken ct)
+    {
+        var count = await _filesService.ClearAllAsync(ct);
+        return Ok(new { deleted = count });
     }
 }

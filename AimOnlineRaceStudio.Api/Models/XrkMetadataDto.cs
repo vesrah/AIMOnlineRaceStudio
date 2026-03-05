@@ -22,6 +22,9 @@ public class XrkMetadataDto
     [JsonPropertyName("racer")]
     public string? Racer { get; set; }
 
+    [JsonPropertyName("loggerId")]
+    public long? LoggerId { get; set; }
+
     [JsonPropertyName("lapCount")]
     public int LapCount { get; set; }
 

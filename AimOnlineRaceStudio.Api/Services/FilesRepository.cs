@@ -12,8 +12,9 @@ public interface IFilesRepository
     Task<FileWithDetails?> GetFileWithDetailsAsync(Guid id, CancellationToken ct = default);
     Task<string?> GetCsvStorageKeyAsync(Guid fileId, CancellationToken ct = default);
     Task<(Guid Id, bool Conflict)> InsertFileAsync(FileRecord file, XrkMetadataDto metadata, string csvStorageKey, long? csvByteSize, CancellationToken ct = default);
-    /// <summary>Deletes the file and all related rows (cascade). Returns true if a row was deleted, and the CSV storage key if it existed.</summary>
     Task<(bool Deleted, string? StorageKey)> DeleteFileAsync(Guid id, CancellationToken ct = default);
+    Task<(long TotalBytes, int FileCount)> GetStorageStatsAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<string>> ClearAllFilesAsync(CancellationToken ct = default);
 }
 
 public record FileRecord(
@@ -25,8 +26,11 @@ public record FileRecord(
     string? Vehicle,
     string? Track,
     string? Racer,
+    long? LoggerId,
     int LapCount,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    DateTime DateCreated,
+    DateTime LastModified);
 
 public record FileListItem(
     Guid Id,
@@ -34,7 +38,13 @@ public record FileListItem(
     string? Filename,
     string? Vehicle,
     string? Track,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? LibraryDate,
+    string? LibraryTime,
+    long? LoggerId,
+    int LapCount,
+    DateTime DateCreated,
+    DateTime LastModified);
 
 public record FileWithDetails(
     FileRecord File,
@@ -71,7 +81,7 @@ public class FilesRepository : IFilesRepository
     {
         await using var conn = await OpenAsync(ct);
         await using var cmd = new NpgsqlCommand(
-            "SELECT id, file_hash, filename, library_date, library_time, vehicle, track, racer, lap_count, created_at FROM xrk_files WHERE id = @id", conn);
+            "SELECT id, file_hash, filename, library_date, library_time, vehicle, track, racer, logger_id, lap_count, created_at, date_created, last_modified FROM xrk_files WHERE id = @id", conn);
         cmd.Parameters.AddWithValue("id", id);
         await using var r = await cmd.ExecuteReaderAsync(ct);
         if (!await r.ReadAsync(ct)) return null;
@@ -84,15 +94,18 @@ public class FilesRepository : IFilesRepository
             r.IsDBNull(5) ? null : r.GetString(5),
             r.IsDBNull(6) ? null : r.GetString(6),
             r.IsDBNull(7) ? null : r.GetString(7),
-            r.GetInt32(8),
-            r.GetDateTime(9));
+            r.IsDBNull(8) ? null : r.GetInt64(8),
+            r.GetInt32(9),
+            r.GetDateTime(10),
+            r.GetDateTime(11),
+            r.GetDateTime(12));
     }
 
     public async Task<List<FileListItem>> ListFilesAsync(CancellationToken ct = default)
     {
         await using var conn = await OpenAsync(ct);
         await using var cmd = new NpgsqlCommand(
-            "SELECT id, file_hash, filename, vehicle, track, created_at FROM xrk_files ORDER BY created_at DESC", conn);
+            "SELECT id, file_hash, filename, vehicle, track, created_at, library_date, library_time, logger_id, lap_count, date_created, last_modified FROM xrk_files ORDER BY created_at DESC", conn);
         var list = new List<FileListItem>();
         await using var r = await cmd.ExecuteReaderAsync(ct);
         while (await r.ReadAsync(ct))
@@ -103,7 +116,13 @@ public class FilesRepository : IFilesRepository
                 r.IsDBNull(2) ? null : r.GetString(2),
                 r.IsDBNull(3) ? null : r.GetString(3),
                 r.IsDBNull(4) ? null : r.GetString(4),
-                r.GetDateTime(5)));
+                r.GetDateTime(5),
+                r.IsDBNull(6) ? null : r.GetString(6),
+                r.IsDBNull(7) ? null : r.GetString(7),
+                r.IsDBNull(8) ? null : r.GetInt64(8),
+                r.GetInt32(9),
+                r.GetDateTime(10),
+                r.GetDateTime(11)));
         }
         return list;
     }
@@ -198,6 +217,34 @@ public class FilesRepository : IFilesRepository
         }
     }
 
+    public async Task<(long TotalBytes, int FileCount)> GetStorageStatsAsync(CancellationToken ct = default)
+    {
+        await using var conn = await OpenAsync(ct);
+        await using var cmd = new NpgsqlCommand(
+            "SELECT COALESCE(SUM(byte_size), 0)::BIGINT, COUNT(*)::INT FROM xrk_csv", conn);
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        if (!await r.ReadAsync(ct))
+            return (0, 0);
+        var totalBytes = r.GetInt64(0);
+        var fileCount = r.GetInt32(1);
+        return (totalBytes, fileCount);
+    }
+
+    public async Task<IReadOnlyList<string>> ClearAllFilesAsync(CancellationToken ct = default)
+    {
+        await using var conn = await OpenAsync(ct);
+        var keys = new List<string>();
+        await using (var cmd = new NpgsqlCommand("SELECT storage_key FROM xrk_csv", conn))
+        await using (var r = await cmd.ExecuteReaderAsync(ct))
+        {
+            while (await r.ReadAsync(ct))
+                keys.Add(r.GetString(0));
+        }
+        await using (var cmd = new NpgsqlCommand("TRUNCATE TABLE xrk_files CASCADE", conn))
+            await cmd.ExecuteNonQueryAsync(ct);
+        return keys;
+    }
+
     private static async Task<Guid?> GetFileIdByHashConflictAsync(NpgsqlConnection conn, string fileHash, CancellationToken ct)
     {
         await using var cmd = new NpgsqlCommand("SELECT id FROM xrk_files WHERE file_hash = @h", conn);
@@ -212,9 +259,10 @@ public class FilesRepository : IFilesRepository
         await using var tx = await conn.BeginTransactionAsync(ct);
         try
         {
+            var now = file.CreatedAt;
             await using (var cmd = new NpgsqlCommand(
-                @"INSERT INTO xrk_files (id, file_hash, filename, library_date, library_time, vehicle, track, racer, lap_count, created_at)
-                  VALUES (@id, @fh, @fn, @ld, @lt, @v, @t, @r, @lc, @ca)
+                @"INSERT INTO xrk_files (id, file_hash, filename, library_date, library_time, vehicle, track, racer, logger_id, lap_count, date_created, last_modified, created_at)
+                  VALUES (@id, @fh, @fn, @ld, @lt, @v, @t, @r, @lid, @lc, @dc, @lm, @ca)
                   ON CONFLICT (file_hash) DO NOTHING
                   RETURNING id", conn))
             {
@@ -227,8 +275,11 @@ public class FilesRepository : IFilesRepository
                 cmd.Parameters.AddWithValue("v", (object?)file.Vehicle ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("t", (object?)file.Track ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("r", (object?)file.Racer ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("lid", (object?)file.LoggerId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("lc", file.LapCount);
-                cmd.Parameters.AddWithValue("ca", file.CreatedAt);
+                cmd.Parameters.AddWithValue("dc", now);
+                cmd.Parameters.AddWithValue("lm", now);
+                cmd.Parameters.AddWithValue("ca", now);
                 var insertedId = await cmd.ExecuteScalarAsync(ct);
                 if (insertedId == null || insertedId is DBNull)
                 {
@@ -291,4 +342,5 @@ public class FilesRepository : IFilesRepository
             throw;
         }
     }
+
 }

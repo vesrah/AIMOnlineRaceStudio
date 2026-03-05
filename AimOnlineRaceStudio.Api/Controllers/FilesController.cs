@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using AimOnlineRaceStudio.Api.Configuration;
 using AimOnlineRaceStudio.Api.Models;
 using AimOnlineRaceStudio.Api.Services;
@@ -78,7 +79,13 @@ public class FilesController : ControllerBase
             Vehicle = x.Vehicle,
             Track = x.Track,
             CreatedAt = x.CreatedAt,
-            ShortestMiddleLapSec = shortestMiddle.TryGetValue(x.Id, out var sec) ? sec : null
+            DateCreated = x.DateCreated,
+            LastModified = x.LastModified,
+            ShortestMiddleLapSec = shortestMiddle.TryGetValue(x.Id, out var sec) ? sec : null,
+            LibraryDate = x.LibraryDate,
+            LibraryTime = x.LibraryTime,
+            LoggerId = x.LoggerId,
+            LapCount = x.LapCount
         }).ToList();
         return Ok(result);
     }
@@ -106,8 +113,11 @@ public class FilesController : ControllerBase
             Vehicle = f.Vehicle,
             Track = f.Track,
             Racer = f.Racer,
+            LoggerId = f.LoggerId,
             LapCount = f.LapCount,
             CreatedAt = f.CreatedAt,
+            DateCreated = f.DateCreated,
+            LastModified = f.LastModified,
             Laps = details.Laps.Select(l => new LapResponse { Index = l.Index, Start = l.Start, Duration = l.Duration }).ToList(),
             Channels = details.Channels.Select(c => new ChannelResponse { Index = c.Index, Name = c.Name, Units = c.Units }).ToList(),
             GpsChannels = details.GpsChannels
@@ -164,6 +174,12 @@ public class FileListResponse
     public string? Track { get; set; }
     public DateTime CreatedAt { get; set; }
     public double? ShortestMiddleLapSec { get; set; }
+    public string? LibraryDate { get; set; }
+    public string? LibraryTime { get; set; }
+    public long? LoggerId { get; set; }
+    public int LapCount { get; set; }
+    public DateTime DateCreated { get; set; }
+    public DateTime LastModified { get; set; }
 }
 
 public class FileDetailResponse
@@ -176,8 +192,11 @@ public class FileDetailResponse
     public string? Vehicle { get; set; }
     public string? Track { get; set; }
     public string? Racer { get; set; }
+    public long? LoggerId { get; set; }
     public int LapCount { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime DateCreated { get; set; }
+    public DateTime LastModified { get; set; }
     public List<LapResponse> Laps { get; set; } = new();
     public List<ChannelResponse> Channels { get; set; } = new();
     public List<string> GpsChannels { get; set; } = new();
@@ -185,14 +204,24 @@ public class FileDetailResponse
 
 public class LapResponse
 {
+    [JsonPropertyName("index")]
     public int Index { get; set; }
+
+    [JsonPropertyName("start")]
     public double Start { get; set; }
+
+    [JsonPropertyName("duration")]
     public double Duration { get; set; }
 }
 
 public class ChannelResponse
 {
+    [JsonPropertyName("index")]
     public int Index { get; set; }
+
+    [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("units")]
     public string? Units { get; set; }
 }

@@ -31,6 +31,12 @@ public class FakeFilesRepository : IFilesRepository
     public Task<(bool Deleted, string? StorageKey)> DeleteFileAsync(Guid id, CancellationToken ct = default)
         => Task.FromResult((false, (string?)null));
 
+    public Task<(long TotalBytes, int FileCount)> GetStorageStatsAsync(CancellationToken ct = default)
+        => Task.FromResult((0L, 0));
+
+    public Task<IReadOnlyList<string>> ClearAllFilesAsync(CancellationToken ct = default)
+        => Task.FromResult((IReadOnlyList<string>)new List<string>());
+
     public Task<FileWithDetails?> GetFileWithDetailsAsync(Guid id, CancellationToken ct = default)
         => Task.FromResult<FileWithDetails?>(null);
 

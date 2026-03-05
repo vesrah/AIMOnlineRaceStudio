@@ -8,6 +8,7 @@ public interface IFilesService
 {
     Task<(Guid FileId, bool Existing)> UploadAsync(Stream fileStream, string fileName, CancellationToken ct = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<int> ClearAllAsync(CancellationToken ct = default);
 }
 
 public class FilesService : IFilesService
@@ -68,6 +69,7 @@ public class FilesService : IFilesService
             }
             catch { /* ignore */ }
 
+            var now = DateTime.UtcNow;
             var file = new FileRecord(
                 Id: Guid.NewGuid(),
                 FileHash: fileHash,
@@ -77,8 +79,11 @@ public class FilesService : IFilesService
                 Vehicle: metadata.Vehicle,
                 Track: metadata.Track,
                 Racer: metadata.Racer,
+                LoggerId: metadata.LoggerId,
                 LapCount: metadata.LapCount,
-                CreatedAt: DateTime.UtcNow);
+                CreatedAt: now,
+                DateCreated: now,
+                LastModified: now);
 
             var (insertedId, conflict) = await _repo.InsertFileAsync(file, metadata, csvFileName, csvByteSize, ct);
             if (conflict)
@@ -138,5 +143,40 @@ public class FilesService : IFilesService
             }
         }
         return true;
+    }
+
+    public async Task<int> ClearAllAsync(CancellationToken ct = default)
+    {
+        var keys = await _repo.ClearAllFilesAsync(ct);
+        var volumePath = _csvOptions.Value.VolumePath?.Trim() ?? "/data/csv";
+        foreach (var storageKey in keys)
+        {
+            var path = Path.Combine(volumePath, storageKey);
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete CSV file {Path}", path);
+            }
+            var cacheKey = storageKey.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? storageKey[..^4]
+                : storageKey;
+            if (cacheKey.Length == 64)
+            {
+                try
+                {
+                    await _xrkApi.ClearCacheEntryAsync(cacheKey, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to clear XrkApi cache for {Hash}", cacheKey);
+                }
+            }
+        }
+        _logger.LogInformation("Cleared all data: {Count} files", keys.Count);
+        return keys.Count;
     }
 }
