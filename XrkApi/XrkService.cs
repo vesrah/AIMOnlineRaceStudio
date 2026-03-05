@@ -90,16 +90,6 @@ public static class XrkService
         }
     }
 
-    public static bool CacheExists(string key)
-    {
-        if (string.IsNullOrWhiteSpace(key) || !IsValidCacheKey(key)) return false;
-        lock (CacheLock)
-        {
-            var metaPath = Path.Combine(GetCacheDir(), $"{key}.metadata.json");
-            return File.Exists(metaPath);
-        }
-    }
-
     public static bool RemoveCacheEntry(string key)
     {
         if (string.IsNullOrWhiteSpace(key) || !IsValidCacheKey(key)) return false;
@@ -133,6 +123,16 @@ public static class XrkService
                 }
             }
             return count;
+        }
+    }
+
+    public static bool CacheExists(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key) || !IsValidCacheKey(key)) return false;
+        lock (CacheLock)
+        {
+            var metaPath = Path.Combine(GetCacheDir(), $"{key}.metadata.json");
+            return File.Exists(metaPath);
         }
     }
 

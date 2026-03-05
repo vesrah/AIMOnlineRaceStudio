@@ -63,6 +63,22 @@ if (!string.IsNullOrWhiteSpace(sharedToken))
     });
 }
 
+app.MapDelete("/cache/{key}", (string key) =>
+{
+    var removed = XrkService.RemoveCacheEntry(key);
+    return removed ? Results.Ok(new { key, removed = true }) : Results.NotFound(new { key, removed = false });
+})
+    .WithName("DeleteCacheEntry")
+    .Produces<object>(200)
+    .Produces<object>(404);
+
+app.MapDelete("/cache", () =>
+{
+    var cleared = XrkService.ClearCache();
+    return Results.Ok(new { cleared });
+})
+    .WithName("ClearCache");
+
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapPost("/csv", (IFormFile file, bool nocache = false) => XrkService.WithXrkFileAsync(file, returnCsv: true, useCache: !nocache))
@@ -83,21 +99,5 @@ app.MapGet("/cache/{key}", (string key) =>
 })
     .WithName("CacheExists")
     .Produces<object>(200);
-
-app.MapDelete("/cache/{key}", (string key) =>
-{
-    var removed = XrkService.RemoveCacheEntry(key);
-    return removed ? Results.Ok(new { key, removed = true }) : Results.NotFound(new { key, removed = false });
-})
-    .WithName("DeleteCacheEntry")
-    .Produces<object>(200)
-    .Produces<object>(404);
-
-app.MapDelete("/cache", () =>
-{
-    var cleared = XrkService.ClearCache();
-    return Results.Ok(new { cleared });
-})
-    .WithName("ClearCache");
 
 app.Run();
