@@ -73,6 +73,10 @@ internal sealed class MismatchedLengthFakeReader : IXrkFileReader
     public string GetVehicleName() => "TestVehicle";
     public string GetTrackName() => "TestTrack";
     public string GetRacerName() => "TestRacer";
+    public string GetChampionshipName() => "";
+    public string GetSessionTypeName() => "";
+    public double? GetSessionDurationSeconds() => null;
+    public uint? GetLoggerId() => null;
     public int LapCount => 1;
     public IReadOnlyList<MatLabXrkWrapper.LapInfo> GetLaps() => [new MatLabXrkWrapper.LapInfo(1, 0.0, 100.0)];
     public List<string> GetChannelNames() => ["Speed"];

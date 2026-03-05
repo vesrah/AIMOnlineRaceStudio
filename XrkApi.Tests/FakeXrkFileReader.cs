@@ -51,6 +51,10 @@ public sealed class FakeXrkFileReader : IXrkFileReader
     public string GetVehicleName() => VehicleName;
     public string GetTrackName() => TrackName;
     public string GetRacerName() => RacerName;
+    public string GetChampionshipName() => "";
+    public string GetSessionTypeName() => "";
+    public double? GetSessionDurationSeconds() => 100.0;
+    public uint? GetLoggerId() => 12345u;
     public int LapCount => 2;
     public IReadOnlyList<MatLabXrkWrapper.LapInfo> GetLaps() =>
         [new MatLabXrkWrapper.LapInfo(1, 0.0, 50.0), new MatLabXrkWrapper.LapInfo(2, 50.0, 50.0)];

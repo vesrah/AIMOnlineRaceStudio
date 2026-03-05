@@ -51,7 +51,7 @@ The service listens on **port 5000** by default (see `Properties/launchSettings.
 
 **CSV:** `POST /csv` — send the XRK file as form data (e.g. `multipart/form-data` with a file field). Response is `text/csv` with a suggested filename. Optional query: `?nocache=true` to skip cache.
 
-**Metadata:** Same upload; response is JSON (library info, vehicle, track, racer, lap count, laps, channels with index/name/units, GPS channel names). Optional query: `?nocache=true` to skip cache.
+**Metadata:** Same upload; response is JSON (library info, vehicle, track, racer, championship, sessionType, sessionDurationSeconds, lap count, laps, channels with index/name/units, GPS channel names). Optional query: `?nocache=true` to skip cache. **Session date:** The DLL exposes `get_date_and_time(idxf)` (session date/time per file) and `get_library_date()` / `get_library_time()` (DLL compile date). The API uses the session date when a file is open (`libraryDate` / `libraryTime` in the response); if the DLL returns null it falls back to the library compile date.
 
 #### Cache key (for `/cache/{key}` and consistent hashing)
 

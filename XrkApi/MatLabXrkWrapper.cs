@@ -40,7 +40,23 @@ namespace XrkApi
             public static extern IntPtr get_racer_name(int idxf);
 
             [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr get_championship_name(int idxf);
+
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr get_session_type_name(int idxf);
+
+            /// <summary>Session date and time for the opened XRK file (idxf). Returns pointer to struct tm, or null.</summary>
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr get_date_and_time(int idxf);
+
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern uint get_logger_id(int idxf);
+
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern int get_laps_count(int idxf);
+
+            [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern int get_session_duration(int idxf, out double pduration);
 
             [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern int get_lap_info(int idxf, int idxl, out double pstart, out double pduration);
@@ -70,8 +86,39 @@ namespace XrkApi
             public static extern IntPtr get_GPS_channel_name(int idxf, int idxc);
         }
 
-        public string LibraryDate => Marshal.PtrToStringAnsi(Native.get_library_date()) ?? "";
-        public string LibraryTime => Marshal.PtrToStringAnsi(Native.get_library_time()) ?? "";
+        /// <summary>C struct tm layout (Windows) for get_date_and_time.</summary>
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Tm
+        {
+            public int tm_sec;
+            public int tm_min;
+            public int tm_hour;
+            public int tm_mday;
+            public int tm_mon;
+            public int tm_year;
+            public int tm_wday;
+            public int tm_yday;
+            public int tm_isdst;
+        }
+
+        /// <summary>Session date (YYYY-MM-DD) from get_date_and_time(idxf) when file is open; otherwise DLL compile date.</summary>
+        public string LibraryDate => TryGetSessionTm(out var tm) ? $"{tm.tm_year + 1900:D4}-{tm.tm_mon + 1:D2}-{tm.tm_mday:D2}" : (Marshal.PtrToStringAnsi(Native.get_library_date()) ?? "");
+        /// <summary>Session time (HH:mm:ss) from get_date_and_time(idxf) when file is open; otherwise DLL compile time.</summary>
+        public string LibraryTime => TryGetSessionTm(out var tm) ? $"{tm.tm_hour:D2}:{tm.tm_min:D2}:{tm.tm_sec:D2}" : (Marshal.PtrToStringAnsi(Native.get_library_time()) ?? "");
+
+        private bool TryGetSessionTm(out Tm tm)
+        {
+            tm = default;
+            if (_fileHandle <= 0) return false;
+            var ptr = Native.get_date_and_time(_fileHandle);
+            if (ptr == IntPtr.Zero) return false;
+            try
+            {
+                tm = Marshal.PtrToStructure<Tm>(ptr);
+                return true;
+            }
+            catch { return false; }
+        }
 
         public int Open(string path)
         {
@@ -82,6 +129,10 @@ namespace XrkApi
         public string GetVehicleName() => PtrToString(Native.get_vehicle_name(_fileHandle));
         public string GetTrackName() => PtrToString(Native.get_track_name(_fileHandle));
         public string GetRacerName() => PtrToString(Native.get_racer_name(_fileHandle));
+        public string GetChampionshipName() => PtrToString(Native.get_championship_name(_fileHandle));
+        public string GetSessionTypeName() => PtrToString(Native.get_session_type_name(_fileHandle));
+        public double? GetSessionDurationSeconds() => _fileHandle <= 0 ? null : Native.get_session_duration(_fileHandle, out var d) == 1 ? d : null;
+        public uint? GetLoggerId() => _fileHandle <= 0 ? null : Native.get_logger_id(_fileHandle);
 
         /// <summary>Last error from the DLL when open_file failed. Call after Open() returns &lt;= 0.</summary>
         public static string GetLastOpenError() => PtrToString(Native.get_last_open_error());

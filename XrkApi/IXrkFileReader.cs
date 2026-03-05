@@ -7,6 +7,10 @@ public interface IXrkFileReader : IDisposable
     string GetVehicleName();
     string GetTrackName();
     string GetRacerName();
+    string GetChampionshipName();
+    string GetSessionTypeName();
+    double? GetSessionDurationSeconds();
+    uint? GetLoggerId();
     int LapCount { get; }
     IReadOnlyList<MatLabXrkWrapper.LapInfo> GetLaps();
     List<string> GetChannelNames();
