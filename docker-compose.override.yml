@@ -1,0 +1,28 @@
+# Dev overlay: mount source and use watch/dev for hot reload. Use with: docker compose up
+# (Override is merged automatically.) For production build-only, use: docker compose -f docker-compose.yml up --build
+
+services:
+  backend:
+    image: mcr.microsoft.com/dotnet/sdk:9.0-alpine
+    volumes:
+      - ./AimOnlineRaceStudio.Api:/app
+      - csvdata:/data/csv
+    working_dir: /app
+    command: sh -c "dotnet restore && dotnet watch run --urls http://+:8080 --no-launch-profile"
+    environment:
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "true"
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./AimOnlineRaceStudio.Frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:5001"
+      API_SERVER_URL: "http://backend:8080"
+    # ports/depends_on inherited from base
+
+volumes:
+  frontend_node_modules:

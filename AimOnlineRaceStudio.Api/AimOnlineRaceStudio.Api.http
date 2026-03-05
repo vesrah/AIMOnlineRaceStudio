@@ -1,0 +1,6 @@
+@AimOnlineRaceStudio.Api_HostAddress = http://localhost:5221
+
+GET {{AimOnlineRaceStudio.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

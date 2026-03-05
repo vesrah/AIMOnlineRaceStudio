@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aim
+      POSTGRES_PASSWORD: aim
+      POSTGRES_DB: aimrace
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aim -d aimrace"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./AimOnlineRaceStudio.Api
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Database=aimrace;Username=aim;Password=aim"
+      # XrkApi is Windows-only: run on a Windows PC (e.g. 10.0.0.44) or Windows VM on the Mac (use host.docker.internal:5000)
+      XrkApi__BaseUrl: "http://10.0.0.44:5000"
+      # Optional: shared token for XrkApi auth. Set the same value as XRK_API_SHARED_TOKEN on the XrkApi (Windows) host.
+      # XrkApi__SharedToken: "your-shared-secret"
+      CsvStorage__VolumePath: "/data/csv"
+    volumes:
+      - csvdata:/data/csv
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5001:8080"
+
+  frontend:
+    build:
+      context: ./AimOnlineRaceStudio.Frontend
+      args:
+        NEXT_PUBLIC_API_URL: "http://localhost:5001"
+    environment:
+      # Browser (client) uses this to call the backend
+      NEXT_PUBLIC_API_URL: "http://localhost:5001"
+      # Server-side fetch (SSR) uses this to reach the backend from inside the container
+      API_SERVER_URL: "http://backend:8080"
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  csvdata:
