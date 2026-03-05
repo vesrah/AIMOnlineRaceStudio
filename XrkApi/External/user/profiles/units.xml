@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserUnitsOfMeasure>
+  <PhysicalQuantity Val="16">
+    <MeasuredObject Val="0">
+      <Channel Name="Default" Unit="mph" Decimals="1"/>
+      <Channel Name="Front Wheel Diff" Unit="mph" Decimals="1"/>
+      <Channel Name="Rear Wheel Diff" Unit="mph" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="17">
+    <MeasuredObject Val="0">
+      <Channel Name="Default" Unit="F" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="14">
+    <MeasuredObject Val="0">
+      <Channel Name="Default" Unit="psi" Decimals="2"/>
+    </MeasuredObject>
+    <MeasuredObject Val="4">
+      <Channel Name="Default" Unit="psi" Decimals="0"/>
+      <Channel Name="Rear Brake Pressure Diff" Unit="psi" Decimals="0"/>
+      <Channel Name="Rear Brake Pressure Diff 2" Unit="psi" Decimals="0"/>
+    </MeasuredObject>
+    <MeasuredObject Val="23">
+      <Channel Name="Default" Unit="psi" Decimals="2"/>
+    </MeasuredObject>
+    <MeasuredObject Val="1" Text="Air">
+      <Channel Name="Default" Unit="psi" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="8">
+    <MeasuredObject Val="44">
+      <Channel Name="Default" Unit="mi" Decimals="1"/>
+    </MeasuredObject>
+    <MeasuredObject Val="0">
+      <Channel Name="Default" Unit="ft"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="20">
+    <MeasuredObject Val="0">
+      <Channel Name="Default" Unit="mph"/>
+    </MeasuredObject>
+    <MeasuredObject Val="83" Text="Shock">
+      <Channel Name="Default" Unit="mph" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="12">
+    <MeasuredObject Val="51">
+      <Channel Name="Default" Unit="ft"/>
+    </MeasuredObject>
+    <MeasuredObject Val="83">
+      <Channel Name="Default" Unit="in"/>
+    </MeasuredObject>
+    <MeasuredObject Val="84">
+      <Channel Name="Default" Unit="in"/>
+    </MeasuredObject>
+    <MeasuredObject Val="0">
+      <Channel Name="Default" Unit="in"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="7">
+    <MeasuredObject Val="2">
+      <Channel Name="Default" Unit="ft"/>
+    </MeasuredObject>
+    <MeasuredObject Val="20" Text="Latitude">
+      <Channel Name="Default" Unit="deg" Decimals="6"/>
+    </MeasuredObject>
+    <MeasuredObject Val="21" Text="Longitude">
+      <Channel Name="Default" Unit="deg" Decimals="6"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="18" Text="Time">
+    <MeasuredObject Val="91" Text="Analysis Time Base">
+      <Channel Name="Default" Unit="s" Decimals="3"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="43" Text="Mass">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kg" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="22" Text="Volume">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="l" Decimals="1"/>
+    </MeasuredObject>
+    <MeasuredObject Val="11" Text="Fuel">
+      <Channel Name="ECU FuelLevel" Unit="gal" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="41" Text="Force">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kgf" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="13" Text="Power">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kW" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="45" Text="Surface">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="m2" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="3" Text="Acceleration">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="g" Decimals="2"/>
+      <Channel Name="FLH Derivative" Unit="ft/s2" Decimals="2"/>
+      <Channel Name="FRH Derivative" Unit="ft/s2" Decimals="2"/>
+      <Channel Name="RLH Derivative" Unit="ft/s2" Decimals="2"/>
+      <Channel Name="RRH Derivative" Unit="ft/s2" Decimals="2"/>
+      <Channel Name="G Sum External GPS" Unit="g" Decimals="2"/>
+      <Channel Name="GSum Yaw Sensor" Unit="g" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="4" Text="Angle">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="deg" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="5" Text="Ang Velocity">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="deg/s" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="10" Text="Mass Flow">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kg/s" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="24" Text="Volume Flow">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="l/s" Decimals="0"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="40" Text="Density">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kg/m3" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="46" Text="Stiffness">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="N/m" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="47" Text="Damper Force">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="N*s/m" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="34" Text="Consumption">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="l/hkm" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="35" Text="Economy">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="km/l" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="42" Text="Duration">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="ms" Decimals="0"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="19" Text="Torque">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="Nm" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="21" Text="Voltage">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="mV" Decimals="0"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="48" Text="E-Consumption">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kWh/hkm" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="49" Text="E-Economy">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="km/kWh" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="50" Text="Energy">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Default" Unit="kWh" Decimals="1"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="11" Text="Number">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="WHL TOL FLH" Unit="#" Decimals="2"/>
+      <Channel Name="WHL TOL FRH" Unit="#" Decimals="2"/>
+      <Channel Name="WHL TOL RLH" Unit="#" Decimals="2"/>
+      <Channel Name="WHL TOL RRH" Unit="#" Decimals="2"/>
+      <Channel Name="ABS Mode" Unit="#" Decimals="0"/>
+      <Channel Name="ABS Interesting" Unit="#" Decimals="0"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+  <PhysicalQuantity Val="1" Text="Percent">
+    <MeasuredObject Val="0" Text="Generic">
+      <Channel Name="Lift Pump Amperage" Unit="%" Decimals="2"/>
+    </MeasuredObject>
+  </PhysicalQuantity>
+</UserUnitsOfMeasure>
