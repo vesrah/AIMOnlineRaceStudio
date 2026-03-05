@@ -85,3 +85,22 @@ docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:5001 aim-fronten
 For production, set `NEXT_PUBLIC_API_URL` to the URL the **browser** uses to reach the backend (e.g. same host with a reverse proxy, or the public backend URL if CORS is configured).
 
 The Dockerfile uses a multi-stage build: `node:20-alpine` for `npm ci` and `next build`, then copies `.next/standalone` and `.next/static` and runs `node server.js` (Next.js standalone output).
+
+## Testing
+
+Unit tests use [Vitest](https://vitest.dev/) and cover `lib/format.ts`, `lib/utils.ts`, and `lib/grouping.ts`.
+
+```bash
+npm run test        # run once
+npm run test:watch  # watch mode
+```
+
+## Bundle size
+
+Production build keeps **First Load JS** per route around ~98 kB (shared runtime ~87 kB plus small page chunks). Client-only UI (delete button, upload form, clear-cache button) is loaded in separate chunks via `next/dynamic`. To inspect the bundle:
+
+```bash
+npm run analyze
+```
+
+This runs the build with `@next/bundle-analyzer` and opens a report of chunk sizes.

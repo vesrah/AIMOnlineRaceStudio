@@ -11,6 +11,13 @@ export interface XrkFileSummary {
   created_at: string;
   /** Shortest lap duration (seconds) among laps that are not first or last; undefined if none. */
   shortest_middle_lap_sec?: number | null;
+  /** Session date (e.g. YYYY-MM-DD) from XRK metadata. */
+  library_date?: string | null;
+  /** Session time (e.g. HH:mm:ss) from XRK metadata. */
+  library_time?: string | null;
+  /** Logger unit serial number from XRK. */
+  logger_id?: number | null;
+  lap_count: number;
 }
 
 /** Lap from file detail (matches xrk_laps / metadata.laps) */

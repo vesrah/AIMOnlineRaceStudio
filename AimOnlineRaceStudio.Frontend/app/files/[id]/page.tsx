@@ -1,18 +1,13 @@
 import Link from 'next/link';
+import nextDynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
 import { getFile } from '@/lib/api';
-import { formatLapTime } from '@/lib/format';
+import { formatLapTime, formatSessionDateTime } from '@/lib/format';
 
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    });
-  } catch {
-    return iso;
-  }
-}
+const DeleteFileButton = nextDynamic(
+  () => import('@/app/components/DeleteFileButton').then((m) => ({ default: m.DeleteFileButton })),
+  { ssr: true }
+);
 
 export const dynamic = 'force-dynamic';
 
@@ -42,24 +37,30 @@ export default async function FileDetailPage({ params }: PageProps) {
         <dd>{detail.track ?? '—'}</dd>
         <dt>Racer</dt>
         <dd>{detail.racer ?? '—'}</dd>
-        <dt>Lap count</dt>
+        <dt>Logger serial</dt>
+        <dd>{detail.logger_id != null ? String(detail.logger_id) : '—'}</dd>
+        <dt>Laps</dt>
         <dd>{detail.lap_count}</dd>
-        <dt>Created</dt>
-        <dd>{formatDate(detail.created_at)}</dd>
+        <dt>Session date</dt>
+        <dd>{formatSessionDateTime(detail.library_date, detail.library_time) ?? '—'}</dd>
       </dl>
 
-      {detail.laps.length > 0 && (
-        <>
-          <h3>Laps</h3>
-          <ul>
-            {detail.laps.map((lap) => (
-              <li key={lap.lap_index}>
-                Lap {lap.lap_index}: start {formatLapTime(lap.start_sec)}, duration {formatLapTime(lap.duration_sec)}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      {(() => {
+        const middleLaps = detail.laps.length > 2 ? detail.laps.slice(1, -1) : [];
+        return middleLaps.length > 0 ? (
+          <>
+            <h3>Laps</h3>
+            <p className="muted">First and last laps (warmup / cooldown) are hidden.</p>
+            <ul>
+              {middleLaps.map((lap) => (
+                <li key={lap.lap_index}>
+                  Lap {lap.lap_index - 1}: {formatLapTime(lap.duration_sec)}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null;
+      })()}
 
       {detail.channels.length > 0 && (
         <>
@@ -91,6 +92,8 @@ export default async function FileDetailPage({ params }: PageProps) {
 
       <p className="nav-links">
         <Link href="/">← Back to file list</Link>
+        <span className="nav-links-sep"></span>
+        <DeleteFileButton fileId={id} redirectPath="/" />
       </p>
     </>
   );

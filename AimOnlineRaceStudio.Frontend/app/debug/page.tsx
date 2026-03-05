@@ -1,22 +1,42 @@
 import Link from 'next/link';
-import { getXrkApiHealth } from '@/lib/api';
-import { ClearCacheButton } from './ClearCacheButton';
+import nextDynamic from 'next/dynamic';
+import { getXrkApiHealth, getStorageStats } from '@/lib/api';
+import { formatMb } from '@/lib/format';
+import { getErrorMessage } from '@/lib/utils';
+
+const ClearCacheButton = nextDynamic(
+  () => import('./ClearCacheButton').then((m) => ({ default: m.ClearCacheButton })),
+  { ssr: true }
+);
+
+const ClearAllButton = nextDynamic(
+  () => import('./ClearAllButton').then((m) => ({ default: m.ClearAllButton })),
+  { ssr: true }
+);
 
 export const dynamic = 'force-dynamic';
 
 export default async function DebugPage() {
   let data;
   let fetchError: string | null = null;
+  let storageStats: { totalBytes: number; fileCount: number } | null = null;
 
   try {
     data = await getXrkApiHealth();
   } catch (e) {
-    fetchError = e instanceof Error ? e.message : 'Failed to load debug info';
+    fetchError = getErrorMessage(e, 'Failed to load debug info');
   }
 
+  try {
+    storageStats = await getStorageStats();
+  } catch {
+    // optional; leave null
+  }
+
+  const body = data?.result?.body as Record<string, unknown> | undefined;
   const cacheCount =
-    data?.result?.body && typeof data.result.body.CachedExportCount === 'number'
-      ? data.result.body.CachedExportCount
+    body && typeof (body.CachedExportCount ?? body.cachedExportCount) === 'number'
+      ? (body.CachedExportCount ?? body.cachedExportCount) as number
       : null;
 
   return (
@@ -42,7 +62,16 @@ export default async function DebugPage() {
             <code>{data.configuredUrl}</code>
           </p>
 
-          <h3>Cache</h3>
+          <h3>Uploaded files (storage)</h3>
+          <p>
+            <strong>Total size:</strong>{' '}
+            {storageStats != null
+              ? `${formatMb(storageStats.totalBytes)} MB (${storageStats.fileCount} file${storageStats.fileCount === 1 ? '' : 's'})`
+              : '—'}
+          </p>
+          <ClearAllButton />
+
+          <h3>XrkApi cache</h3>
           <p>
             <strong>Cached exports:</strong>{' '}
             {cacheCount != null ? cacheCount : '—'}
